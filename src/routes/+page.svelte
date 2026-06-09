@@ -227,7 +227,7 @@
 <div class="map-container">
 	<MapLibreMap
 		autoloadGlobalCss={false}
-		style="https://demotiles.maplibre.org/style.json"
+		style="https://tiles.openfreemap.org/styles/liberty"
 		center={{ lng: 10, lat: 48 }}
 		zoom={3}
 		dragRotate={false}
