@@ -226,6 +226,7 @@
 
 <div class="map-container">
 	<MapLibreMap
+		autoloadGlobalCss={false}
 		style="https://demotiles.maplibre.org/style.json"
 		center={{ lng: 10, lat: 48 }}
 		zoom={3}
