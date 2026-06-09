@@ -258,17 +258,20 @@
 				source="leagues"
 				layout={{
 					'text-field': ['get', 'name'],
-					'text-size': 11,
+					'text-size': 13,
 					'text-offset': [0, 0.2],
 					'text-anchor': 'top',
 					'text-optional': true,
 					'text-allow-overlap': false
 				}}
 				paint={{
-					'text-color': '#1d3557',
+					'text-color': '#000000',
 					'text-halo-color': '#ffffff',
-					'text-halo-width': 1
+					'text-halo-width': 1.5
 				}}
+				onclick={handleClick}
+				onmouseenter={handlePinMouseEnter}
+				onmouseleave={handlePinMouseLeave}
 			/>
 		</GeoJSONSource>
 	</MapLibreMap>
