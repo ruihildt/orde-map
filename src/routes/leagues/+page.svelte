@@ -25,7 +25,8 @@
 	};
 	import { onMount } from 'svelte';
 	import { selectedLeague, leagueData } from '$lib/stores';
-	import { page } from '$app/stores';
+	import { slugify } from '$lib/utils';
+	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
@@ -53,8 +54,17 @@
 		<circle cx="15" cy="14" r="6" fill="#fff"/>
 	</svg>`;
 
-	// Derive selected league ID from URL
-	let selectedLeagueId = $derived($page.url.searchParams.get('league') ?? '');
+	// Derive selected league param from URL (format: "slug--id")
+	let selectedLeagueParam = $derived(page.url.searchParams.get('league') ?? '');
+
+	// Extract the ID from the "--id" suffix for reliable lookup
+	let selectedLeagueId = $derived.by(() => {
+		const doubleDashIndex = selectedLeagueParam.lastIndexOf('--');
+		if (doubleDashIndex !== -1) {
+			return selectedLeagueParam.substring(doubleDashIndex + 2);
+		}
+		return '';
+	});
 
 	// Sync URL param to the selectedLeague store
 	$effect(() => {
@@ -97,13 +107,16 @@
 		if (e.features && e.features.length > 0) {
 			const feature = e.features[0];
 			const id = feature.properties?.id ?? '';
+			const name = feature.properties?.name ?? '';
+			const slug = slugify(name);
+			const param = `${slug}--${id}`;
 			if (selectedLeagueId === id) {
 				// Deselect
 				// eslint-disable-next-line
 				goto('/leagues', { replaceState: true });
 			} else {
 				// eslint-disable-next-line
-				goto(`/leagues?league=${encodeURIComponent(id)}`, { replaceState: true });
+				goto(`/leagues?league=${encodeURIComponent(param)}`, { replaceState: true });
 			}
 		}
 	}
