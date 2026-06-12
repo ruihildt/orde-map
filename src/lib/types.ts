@@ -1,29 +1,43 @@
+export interface Point {
+	type: 'Point';
+	coordinates: [number, number];
+}
+
+export interface Country {
+	id: string;
+	name: string;
+	flag: string;
+	three_letters_code: string;
+	two_letters_code: string;
+	continent: string;
+}
+
 export interface League {
 	id: string;
 	name: string;
-	city: string | null;
 	country: string | null;
 	location: {
-		type: 'Point';
-		coordinates: [number, number];
+		id: number;
+		name: string;
+		address: string;
+		location: Point;
 	} | null;
+}
+
+export interface Feature<T> {
+	type: 'Feature';
+	geometry: Point;
+	properties: T;
+}
+
+export interface LeagueProperties {
+	id: string;
+	name: string;
+	country: string | null;
 	address: string | null;
 }
 
-export interface LeagueFeature {
-	type: 'Feature';
-	geometry: {
-		type: 'Point';
-		coordinates: [number, number];
-	};
-	properties: {
-		id: string;
-		name: string;
-		city: string | null;
-		country: string | null;
-		address: string | null;
-	};
-}
+export type LeagueFeature = Feature<LeagueProperties>;
 
 export interface Team {
 	id: string;
@@ -60,7 +74,9 @@ export interface LeagueContact {
 	email: string;
 }
 
-export interface LeagueFeatureCollection {
+export interface FeatureCollection<T> {
 	type: 'FeatureCollection';
-	features: LeagueFeature[];
+	features: Feature<T>[];
 }
+
+export type LeagueFeatureCollection = FeatureCollection<LeagueProperties>;

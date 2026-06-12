@@ -33,7 +33,6 @@
 	let selectedLeague: {
 		id: string;
 		name: string;
-		city: string | null;
 		country: string | null;
 		address: string | null;
 	} | null = $state(null);
@@ -83,7 +82,6 @@
 			selectedLeague = {
 				id: feature.properties?.id ?? '',
 				name: feature.properties?.name ?? '',
-				city: feature.properties?.city ?? null,
 				country: feature.properties?.country ?? null,
 				address: feature.properties?.address ?? null
 			};
@@ -138,12 +136,16 @@
 		</button>
 		<h2 class="panel-title">{selectedLeague.name}</h2>
 		<div class="panel-details">
-			{#if selectedLeague.city || selectedLeague.country}
+			{#if selectedLeague.country}
 				<div class="detail-row">
 					<span class="detail-label">Location</span>
-					<span class="detail-value"
-						>{[selectedLeague.city, selectedLeague.country].filter(Boolean).join(', ')}</span
-					>
+					<span class="detail-value">{selectedLeague.country}</span>
+				</div>
+			{/if}
+			{#if selectedLeague.address}
+				<div class="detail-row">
+					<span class="detail-label">Address</span>
+					<span class="detail-value">{selectedLeague.address}</span>
 				</div>
 			{/if}
 		</div>
