@@ -127,3 +127,9 @@
 		@apply font-sans;
 	}
 }
+
+/* Sidebar active menu item - stronger highlight */
+[data-slot="sidebar-menu-button"][data-active="true"] {
+	background-color: var(--sidebar-primary) !important;
+	color: var(--sidebar-primary-foreground) !important;
+}

@@ -6,6 +6,9 @@
 		PUBLIC_UMAMI_SCRIPT_URL,
 		PUBLIC_UMAMI_WEBSITE_ID
 	} from '$env/static/public';
+	import { SidebarProvider, SidebarInset } from '$lib/components/ui/sidebar';
+	import AppSidebar from '$lib/components/AppSidebar.svelte';
+	import TitleBar from '$lib/components/TitleBar.svelte';
 
 	let { children } = $props();
 </script>
@@ -17,4 +20,10 @@
 	{/if}
 </svelte:head>
 
-{@render children()}
+<SidebarProvider>
+	<AppSidebar />
+	<SidebarInset>
+		<TitleBar />
+		{@render children()}
+	</SidebarInset>
+</SidebarProvider>
