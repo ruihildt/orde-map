@@ -113,10 +113,10 @@
 			if (selectedLeagueId === id) {
 				// Deselect
 				// eslint-disable-next-line
-				goto('/leagues', { replaceState: true });
+				goto('/leagues/', { replaceState: true });
 			} else {
 				// eslint-disable-next-line
-				goto(`/leagues?league=${encodeURIComponent(param)}`, { replaceState: true });
+				goto(`/leagues/?league=${encodeURIComponent(param)}`, { replaceState: true });
 			}
 		}
 	}

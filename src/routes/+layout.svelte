@@ -14,13 +14,13 @@
 	let { children } = $props();
 
 	const pageTitles: Record<string, string> = {
-		'/leagues': 'Leagues',
-		'/license': 'License',
-		'/about': 'About'
+		'/leagues/': 'Leagues',
+		'/license/': 'License',
+		'/about/': 'About'
 	};
 
 	let pageTitle = $derived(
-		page.url.pathname === '/leagues' && $selectedLeague
+		page.url.pathname === '/leagues/' && $selectedLeague
 			? `${$selectedLeague.name} – Open Roller Derby Europe`
 			: page.url.pathname === '/'
 				? 'Open Roller Derby Europe'

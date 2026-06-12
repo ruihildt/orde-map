@@ -42,7 +42,7 @@
 			sidebar.openMobile = false;
 		}
 		// eslint-disable-next-line
-		goto('/leagues', { replaceState: true });
+		goto('/leagues/', { replaceState: true });
 	}
 
 	let showAllGames = new SvelteSet<string>();
@@ -69,11 +69,11 @@
 		}))
 	);
 
-	const navMenuItems = [{ label: 'Leagues', icon: MapPin, href: '/leagues' }];
+	const navMenuItems = [{ label: 'Leagues', icon: MapPin, href: '/leagues/' }];
 
 	const secondaryMenuItems = [
-		{ label: 'About', icon: Info, href: '/about' },
-		{ label: 'License', icon: ScrollText, href: '/license' }
+		{ label: 'About', icon: Info, href: '/about/' },
+		{ label: 'License', icon: ScrollText, href: '/license/' }
 	];
 </script>
 

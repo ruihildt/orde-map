@@ -8,20 +8,20 @@
 	const sidebar = useSidebar();
 
 	const pageTitles: Record<string, string> = {
-		'/leagues': 'Leagues',
-		'/license': 'License',
-		'/about': 'About'
+		'/leagues/': 'Leagues',
+		'/license/': 'License',
+		'/about/': 'About'
 	};
 
 	let title = $derived(
-		page.url.pathname === '/leagues' && $selectedLeague
+		page.url.pathname === '/leagues/' && $selectedLeague
 			? $selectedLeague.name
 			: (pageTitles[page.url.pathname] ?? 'Open Roller Derby Europe')
 	);
 
 	let breadcrumbs = $derived(
-		page.url.pathname === '/leagues' && $selectedLeague
-			? [{ label: 'Leagues', href: '/leagues' }, { label: $selectedLeague.name }]
+		page.url.pathname === '/leagues/' && $selectedLeague
+			? [{ label: 'Leagues', href: '/leagues/' }, { label: $selectedLeague.name }]
 			: null
 	);
 
