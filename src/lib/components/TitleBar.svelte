@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { useSidebar } from '$lib/components/ui/sidebar';
-	import { Menu, X } from '@lucide/svelte';
+	import { Menu, X, Link } from '@lucide/svelte';
 	import { selectedLeague } from '$lib/stores';
 	import logo from '$lib/assets/skate.png';
 	import { page } from '$app/stores';
@@ -24,15 +24,23 @@
 			? [{ label: 'Leagues', href: '/leagues' }, { label: $selectedLeague.name }]
 			: null
 	);
+
+	let copied = $state(false);
+
+	function copyLink() {
+		navigator.clipboard.writeText($page.url.href);
+		copied = true;
+		setTimeout(() => (copied = false), 2000);
+	}
 </script>
 
 <header
-	class="flex h-12 items-center gap-2 border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+	class="relative z-50 flex h-12 items-center gap-2 border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
 >
 	<div class="flex items-center gap-2">
 		<img src={logo} alt="ORDE" class="size-7 rounded md:hidden" />
 	</div>
-	<h1 class="flex-1 text-sm font-medium text-foreground truncate">
+	<h1 class="text-sm font-medium text-foreground truncate">
 		{#if breadcrumbs}
 			{#each breadcrumbs as crumb, i (crumb.label)}
 				{#if i > 0}
@@ -48,9 +56,10 @@
 			<span>{title}</span>
 		{/if}
 	</h1>
+	<div class="flex-1"></div>
 	{#if sidebar.isMobile}
 		<button
-			class="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+			class="relative z-50 flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
 			onclick={() => sidebar.toggle()}
 			aria-label="Toggle menu"
 		>
@@ -58,6 +67,19 @@
 				<X class="size-5" />
 			{:else}
 				<Menu class="size-5" />
+			{/if}
+		</button>
+	{/if}
+	{#if breadcrumbs && !sidebar.isMobile}
+		<button
+			class="flex items-center gap-1.5 rounded-md border bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+			onclick={copyLink}
+		>
+			{#if copied}
+				Copied!
+			{:else}
+				<Link class="size-3.5" />
+				Copy link
 			{/if}
 		</button>
 	{/if}

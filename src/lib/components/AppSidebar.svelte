@@ -4,14 +4,12 @@
 		SidebarContent,
 		SidebarGroup,
 		SidebarGroupContent,
-		SidebarGroupLabel,
 		SidebarHeader,
 		SidebarMenu,
 		SidebarMenuButton,
-		SidebarMenuItem,
-		SidebarSeparator
+		SidebarMenuItem
 	} from '$lib/components/ui/sidebar';
-	import { ArrowLeft, MapPin, Info, ScrollText } from '@lucide/svelte';
+	import { ArrowLeft, MapPin, Info, ScrollText, Link } from '@lucide/svelte';
 	import logo from '$lib/assets/skate.png';
 	import { useSidebar } from '$lib/components/ui/sidebar';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -23,6 +21,14 @@
 
 	const sidebar = useSidebar();
 
+	let copied = $state(false);
+
+	function copyLink() {
+		navigator.clipboard.writeText($page.url.href);
+		copied = true;
+		setTimeout(() => (copied = false), 2000);
+	}
+
 	// Auto-open sidebar on mobile when a league is selected
 	$effect(() => {
 		if ($selectedLeague && sidebar.isMobile) {
@@ -32,6 +38,9 @@
 
 	function handleBack() {
 		$selectedLeague = null;
+		if (sidebar.isMobile) {
+			sidebar.openMobile = false;
+		}
 		// eslint-disable-next-line
 		goto('/leagues', { replaceState: true });
 	}
@@ -80,27 +89,43 @@
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 		</SidebarMenu>
+		{#if $selectedLeague}
+			<button
+				class="flex w-full items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+				onclick={handleBack}
+			>
+				<ArrowLeft class="size-4" />
+				<span>Show all leagues</span>
+			</button>
+		{/if}
 	</SidebarHeader>
 
-	<SidebarContent>
+	<SidebarContent class="overflow-x-hidden">
 		{#if $selectedLeague}
-			<!-- League Detail View -->
-			<SidebarGroup>
-				<SidebarGroupContent>
-					<button
-						class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-						onclick={handleBack}
-					>
-						<ArrowLeft class="size-4" />
-						<span class="group-data-[collapsible=icon]:hidden">Show all leagues</span>
-					</button>
-				</SidebarGroupContent>
-			</SidebarGroup>
+			{#if sidebar.isMobile}
+				<SidebarGroup class="py-0">
+					<SidebarGroupContent>
+						<div class="px-3 pt-2 pb-1">
+							<div class="text-sm font-semibold text-foreground truncate">
+								{$selectedLeague.name}
+							</div>
+						</div>
+						<button
+							class="flex items-center gap-1.5 rounded-md border bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+							onclick={copyLink}
+						>
+							{#if copied}
+								Copied!
+							{:else}
+								<Link class="size-3.5" />
+								Copy link
+							{/if}
+						</button>
+					</SidebarGroupContent>
+				</SidebarGroup>
+			{/if}
 
-			<SidebarSeparator />
-
-			<SidebarGroup class="overflow-y-auto">
-				<SidebarGroupLabel>{$selectedLeague.name}</SidebarGroupLabel>
+			<SidebarGroup class="pt-0">
 				<SidebarGroupContent>
 					<div class="space-y-3 px-2 group-data-[collapsible=icon]:hidden">
 						{#if $selectedLeague.country}
@@ -111,128 +136,124 @@
 								<span class="text-sm text-foreground">{$selectedLeague.country}</span>
 							</div>
 						{/if}
-						{#if $selectedLeague.address}
-							<div class="flex flex-col gap-0.5">
+						{#if leagueContacts.length > 0}
+							<div class="flex flex-col gap-1.5">
 								<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-									>Address</span
+									>Contacts</span
 								>
-								<span class="text-sm text-foreground">{$selectedLeague.address}</span>
+								<div class="space-y-2">
+									{#each leagueContacts as contact (contact.id)}
+										<div class="rounded-lg bg-muted/50 p-2.5 flex flex-col gap-1">
+											<div class="text-sm font-medium">{contact.Type}</div>
+											{#if contact.name}
+												<div class="text-xs text-muted-foreground">{contact.name}</div>
+											{/if}
+											<a
+												class="text-xs text-primary hover:underline break-all"
+												href="mailto:{contact.email}">{contact.email}</a
+											>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+						{#if gamesByTeam.length > 0}
+							<div class="flex flex-col gap-1.5">
+								<span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+									>Results</span
+								>
+								{#each gamesByTeam as { team, games } (team.id)}
+									<div>
+										<div class="flex gap-1.5 mb-2 flex-wrap">
+											<span class="text-xs font-semibold text-foreground">
+												{team.team_name}
+											</span>
+											{#if team.age_category}
+												<span
+													class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
+												>
+													{team.age_category}
+												</span>
+											{/if}
+											{#if team.team_type}
+												<span
+													class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
+												>
+													{team.team_type}
+												</span>
+											{/if}
+											{#if team.affiliation && team.affiliation.length > 0}
+												{#each team.affiliation as aff (aff.id)}
+													{#if orgMap.get(aff.organization_id)}
+														<span
+															class="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-destructive"
+														>
+															{orgMap.get(aff.organization_id)}
+														</span>
+													{/if}
+												{/each}
+											{/if}
+										</div>
+										{#if games.length > 0}
+											<div class="space-y-2">
+												{#each showAllGames.has(team.id) ? games : games.slice(0, 5) as game (game.id)}
+													<div class="rounded-lg bg-muted/50 p-2.5 flex flex-col gap-1.5">
+														<div
+															class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+														>
+															{new Date(game.date).toLocaleDateString('en-GB', {
+																day: 'numeric',
+																month: 'short',
+																year: 'numeric'
+															})}
+														</div>
+														<div class="flex items-center gap-2 text-xs">
+															<span
+																class="flex-1 {game.home_team_score > game.away_team_score
+																	? 'font-bold text-foreground'
+																	: 'text-muted-foreground'}"
+															>
+																{teamNameMap.get(game.home_team) ?? 'Unknown'}
+															</span>
+															<span class="font-bold text-foreground whitespace-nowrap">
+																{game.home_team_score} - {game.away_team_score}
+															</span>
+															<span
+																class="flex-1 text-right {game.away_team_score >
+																game.home_team_score
+																	? 'font-bold text-foreground'
+																	: 'text-muted-foreground'}"
+															>
+																{teamNameMap.get(game.away_team) ?? 'Unknown'}
+															</span>
+														</div>
+													</div>
+												{/each}
+												{#if games.length > 5}
+													<button
+														class="w-full rounded-md border border-primary/30 text-primary py-1.5 text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors"
+														onclick={() => {
+															if (showAllGames.has(team.id)) {
+																showAllGames.delete(team.id);
+															} else {
+																showAllGames.add(team.id);
+															}
+														}}
+													>
+														{showAllGames.has(team.id)
+															? 'Show less'
+															: `Show all ${games.length} games`}
+													</button>
+												{/if}
+											</div>
+										{/if}
+									</div>
+								{/each}
 							</div>
 						{/if}
 					</div>
 				</SidebarGroupContent>
 			</SidebarGroup>
-
-			{#if leagueContacts.length > 0}
-				<SidebarGroup>
-					<SidebarGroupLabel>Contacts</SidebarGroupLabel>
-					<SidebarGroupContent>
-						<div class="space-y-2 px-2 group-data-[collapsible=icon]:hidden">
-							{#each leagueContacts as contact (contact.id)}
-								<div class="rounded-lg bg-muted/50 p-2.5 flex flex-col gap-1">
-									<div class="text-sm font-medium">{contact.Type}</div>
-									{#if contact.name}
-										<div class="text-xs text-muted-foreground">{contact.name}</div>
-									{/if}
-									<a
-										class="text-xs text-primary hover:underline break-all"
-										href="mailto:{contact.email}">{contact.email}</a
-									>
-								</div>
-							{/each}
-						</div>
-					</SidebarGroupContent>
-				</SidebarGroup>
-			{/if}
-
-			{#if gamesByTeam.length > 0}
-				{#each gamesByTeam as { team, games } (team.id)}
-					<SidebarGroup>
-						<SidebarGroupLabel>{team.team_name}</SidebarGroupLabel>
-						<SidebarGroupContent>
-							<div class="px-2 group-data-[collapsible=icon]:hidden">
-								<div class="flex gap-1.5 mb-2 flex-wrap">
-									{#if team.age_category}
-										<span
-											class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
-										>
-											{team.age_category}
-										</span>
-									{/if}
-									{#if team.team_type}
-										<span
-											class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
-										>
-											{team.team_type}
-										</span>
-									{/if}
-									{#if team.affiliation && team.affiliation.length > 0}
-										{#each team.affiliation as aff (aff.id)}
-											{#if orgMap.get(aff.organization_id)}
-												<span
-													class="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-destructive"
-												>
-													{orgMap.get(aff.organization_id)}
-												</span>
-											{/if}
-										{/each}
-									{/if}
-								</div>
-								{#if games.length > 0}
-									<div class="space-y-2">
-										{#each showAllGames.has(team.id) ? games : games.slice(0, 5) as game (game.id)}
-											<div class="rounded-lg bg-muted/50 p-2.5 flex flex-col gap-1.5">
-												<div
-													class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-												>
-													{new Date(game.date).toLocaleDateString('en-GB', {
-														day: 'numeric',
-														month: 'short',
-														year: 'numeric'
-													})}
-												</div>
-												<div class="flex items-center gap-2 text-xs">
-													<span
-														class="flex-1 {game.home_team_score > game.away_team_score
-															? 'font-bold text-foreground'
-															: 'text-muted-foreground'}"
-													>
-														{teamNameMap.get(game.home_team) ?? 'Unknown'}
-													</span>
-													<span class="font-bold text-foreground whitespace-nowrap">
-														{game.home_team_score} - {game.away_team_score}
-													</span>
-													<span
-														class="flex-1 text-right {game.away_team_score > game.home_team_score
-															? 'font-bold text-foreground'
-															: 'text-muted-foreground'}"
-													>
-														{teamNameMap.get(game.away_team) ?? 'Unknown'}
-													</span>
-												</div>
-											</div>
-										{/each}
-										{#if games.length > 5}
-											<button
-												class="w-full rounded-md border border-primary/30 text-primary py-1.5 text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors"
-												onclick={() => {
-													if (showAllGames.has(team.id)) {
-														showAllGames.delete(team.id);
-													} else {
-														showAllGames.add(team.id);
-													}
-												}}
-											>
-												{showAllGames.has(team.id) ? 'Show less' : `Show all ${games.length} games`}
-											</button>
-										{/if}
-									</div>
-								{/if}
-							</div>
-						</SidebarGroupContent>
-					</SidebarGroup>
-				{/each}
-			{/if}
 		{:else}
 			<!-- Main Navigation -->
 			<SidebarGroup>
