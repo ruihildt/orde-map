@@ -27,15 +27,18 @@
 	import { SidebarProvider, SidebarInset } from '$lib/components/ui/sidebar';
 	import AppSidebar from '$lib/components/AppSidebar.svelte';
 	import TitleBar from '$lib/components/TitleBar.svelte';
+	import { selectedLeague, leagueData } from '$lib/stores';
 
 	let { data }: { data: PageData } = $props();
 
-	let selectedLeague: {
-		id: string;
-		name: string;
-		country: string | null;
-		address: string | null;
-	} | null = $state(null);
+	$effect(() => {
+		leagueData.set({
+			teams: data.teams,
+			contacts: data.contacts,
+			organizations: data.organizations,
+			games: data.games
+		});
+	});
 
 	let mapInstance: maplibregl.Map | undefined = $state(undefined);
 	let pinImage: HTMLImageElement | undefined = $state(undefined);
@@ -58,7 +61,7 @@
 	) {
 		if (e.features && e.features.length > 0) {
 			const feature = e.features[0];
-			selectedLeague = {
+			$selectedLeague = {
 				id: feature.properties?.id ?? '',
 				name: feature.properties?.name ?? '',
 				country: feature.properties?.country ?? null,
@@ -79,10 +82,6 @@
 		}
 	}
 
-	function handleBackToMenu() {
-		selectedLeague = null;
-	}
-
 	function handleMapLoad() {
 		if (!mapInstance || !data.geojson.features.length) return;
 		const bounds = new maplibregl.LngLatBounds();
@@ -95,16 +94,9 @@
 </script>
 
 <SidebarProvider>
-	<AppSidebar
-		{selectedLeague}
-		onBack={handleBackToMenu}
-		teams={data.teams}
-		contacts={data.contacts}
-		organizations={data.organizations}
-		games={data.games}
-	/>
+	<AppSidebar />
 	<SidebarInset>
-		<TitleBar {selectedLeague} />
+		<TitleBar />
 		<div class="relative flex-1 h-[calc(100svh-3rem)]">
 			<MapLibreMap
 				autoloadGlobalCss={false}

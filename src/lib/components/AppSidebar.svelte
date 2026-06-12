@@ -14,17 +14,17 @@
 	import { useSidebar } from '$lib/components/ui/sidebar';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { selectedLeague, leagueData } from '$lib/stores';
 
-	let currentPath = $derived($page.url.pathname);
+	let currentPath = $derived(page.url.pathname);
 
 	const sidebar = useSidebar();
 
 	let copied = $state(false);
 
 	function copyLink() {
-		navigator.clipboard.writeText($page.url.href);
+		navigator.clipboard.writeText(page.url.href);
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
 	}

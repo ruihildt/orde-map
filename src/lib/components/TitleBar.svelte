@@ -3,7 +3,7 @@
 	import { Menu, X, Link } from '@lucide/svelte';
 	import { selectedLeague } from '$lib/stores';
 	import logo from '$lib/assets/skate.png';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	const sidebar = useSidebar();
 
@@ -14,13 +14,13 @@
 	};
 
 	let title = $derived(
-		$page.url.pathname === '/leagues' && $selectedLeague
+		page.url.pathname === '/leagues' && $selectedLeague
 			? $selectedLeague.name
-			: (pageTitles[$page.url.pathname] ?? 'Open Roller Derby Europe')
+			: (pageTitles[page.url.pathname] ?? 'Open Roller Derby Europe')
 	);
 
 	let breadcrumbs = $derived(
-		$page.url.pathname === '/leagues' && $selectedLeague
+		page.url.pathname === '/leagues' && $selectedLeague
 			? [{ label: 'Leagues', href: '/leagues' }, { label: $selectedLeague.name }]
 			: null
 	);
@@ -28,7 +28,7 @@
 	let copied = $state(false);
 
 	function copyLink() {
-		navigator.clipboard.writeText($page.url.href);
+		navigator.clipboard.writeText(page.url.href);
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
 	}
@@ -56,6 +56,19 @@
 			<span>{title}</span>
 		{/if}
 	</h1>
+	{#if breadcrumbs && !sidebar.isMobile}
+		<button
+			class="flex items-center gap-1.5 rounded-md border bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+			onclick={copyLink}
+		>
+			{#if copied}
+				Copied!
+			{:else}
+				<Link class="size-3.5" />
+				Copy link
+			{/if}
+		</button>
+	{/if}
 	<div class="flex-1"></div>
 	{#if sidebar.isMobile}
 		<button
@@ -67,19 +80,6 @@
 				<X class="size-5" />
 			{:else}
 				<Menu class="size-5" />
-			{/if}
-		</button>
-	{/if}
-	{#if breadcrumbs && !sidebar.isMobile}
-		<button
-			class="flex items-center gap-1.5 rounded-md border bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-			onclick={copyLink}
-		>
-			{#if copied}
-				Copied!
-			{:else}
-				<Link class="size-3.5" />
-				Copy link
 			{/if}
 		</button>
 	{/if}
