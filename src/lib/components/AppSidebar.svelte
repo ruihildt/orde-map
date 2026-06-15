@@ -12,8 +12,29 @@
 	import { MapPin, Info, ScrollText, Trophy } from '@lucide/svelte';
 	import logo from '$lib/assets/skate.png';
 	import { page } from '$app/state';
+	import LeagueFilters from './LeagueFilters.svelte';
+	import type { LeagueFeatureCollection, Team, Organization } from '$lib/types';
 
 	let currentPath = $derived(page.url.pathname);
+
+	// Filters are only relevant on the leagues map page (not league detail pages).
+	let showLeagueFilters = $derived(currentPath === '/leagues/');
+
+	// The /leagues/ load function returns geojson/teams/organizations.
+	// We read them defensively from the merged page data so the sidebar
+	// doesn't crash on routes that don't provide them.
+	let leagueData = $derived(
+		showLeagueFilters
+			? (page.data as {
+					geojson?: LeagueFeatureCollection;
+					teams?: Team[];
+					organizations?: Organization[];
+				})
+			: null
+	);
+	let canShowFilters = $derived(
+		!!leagueData?.geojson && !!leagueData.teams && !!leagueData.organizations
+	);
 
 	const navMenuItems = [
 		{ label: 'Leagues', icon: MapPin, href: '/leagues/' },
@@ -64,8 +85,21 @@
 			</SidebarGroupContent>
 		</SidebarGroup>
 
+		<!-- Filters (only on leagues map page) -->
+		{#if canShowFilters && leagueData?.geojson && leagueData.teams && leagueData.organizations}
+			<div class="flex-1 overflow-y-auto">
+				<LeagueFilters
+					geojson={leagueData.geojson}
+					teams={leagueData.teams}
+					organizations={leagueData.organizations}
+				/>
+			</div>
+		{/if}
+
 		<!-- Spacer to push secondary items to bottom -->
-		<div class="flex-1"></div>
+		{#if !canShowFilters}
+			<div class="flex-1"></div>
+		{/if}
 
 		<!-- Secondary Menu -->
 		<SidebarGroup>

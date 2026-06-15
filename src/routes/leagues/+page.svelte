@@ -18,6 +18,9 @@
 		Game
 	} from '$lib/types';
 	import LeaguePopupContent from '$lib/components/LeaguePopupContent.svelte';
+	import { page } from '$app/state';
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 
 	type PageData = {
 		geojson: LeagueFeatureCollection;
@@ -26,7 +29,6 @@
 		organizations: Organization[];
 		games: Game[];
 	};
-	import { onMount } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -79,7 +81,7 @@
 				popupOpen = false;
 				return;
 			}
-			const leagueFeature = data.geojson.features.find((f) => f.properties.id === id);
+			const leagueFeature = filteredGeojson.features.find((f) => f.properties.id === id);
 			if (leagueFeature) {
 				selectedLeague = {
 					id: leagueFeature.properties.id,
@@ -133,6 +135,74 @@
 		const sel = selectedLeague;
 		return sel ? ['case', ['==', ['get', 'id'], sel.id], 1, 0.4] : 1;
 	});
+
+	// --- Filtering based on URL params ---
+	// Precompute per-league organization ids and team types from the teams data.
+	let leagueOrgMap = $derived(
+		data.teams.reduce<Record<string, string[]>>((acc, t) => {
+			const arr = acc[t.team_league] ?? [];
+			for (const aff of t.affiliation ?? []) {
+				if (!arr.includes(aff.organization_id)) arr.push(aff.organization_id);
+			}
+			return { ...acc, [t.team_league]: arr };
+		}, {})
+	);
+	let leagueTeamTypeMap = $derived(
+		data.teams.reduce<Record<string, string[]>>((acc, t) => {
+			if (!t.team_type) return acc;
+			const arr = acc[t.team_league] ?? [];
+			if (!arr.includes(t.team_type)) arr.push(t.team_type);
+			return { ...acc, [t.team_league]: arr };
+		}, {})
+	);
+
+	let selectedCountries = $derived(browser ? page.url.searchParams.getAll('country') : []);
+	let selectedOrgs = $derived(browser ? page.url.searchParams.getAll('organization') : []);
+	let selectedTeamTypes = $derived(browser ? page.url.searchParams.getAll('team_type') : []);
+	let hasFilters = $derived(
+		selectedCountries.length > 0 || selectedOrgs.length > 0 || selectedTeamTypes.length > 0
+	);
+
+	let filteredGeojson = $derived.by<LeagueFeatureCollection>(() => {
+		if (!hasFilters) return data.geojson;
+		const features = data.geojson.features.filter((f) => {
+			const id = f.properties.id;
+			if (selectedCountries.length > 0 && !selectedCountries.includes(f.properties.country ?? '')) {
+				return false;
+			}
+			if (selectedOrgs.length > 0) {
+				const leagueOrgs = leagueOrgMap[id];
+				if (!leagueOrgs || !leagueOrgs.some((o) => selectedOrgs.includes(o))) return false;
+			}
+			if (selectedTeamTypes.length > 0) {
+				const leagueTypes = leagueTeamTypeMap[id];
+				if (!leagueTypes || !leagueTypes.some((t) => selectedTeamTypes.includes(t))) return false;
+			}
+			return true;
+		});
+		return { type: 'FeatureCollection', features };
+	});
+
+	// Close the popup if the selected league is no longer in the filtered set.
+	$effect(() => {
+		const fg = filteredGeojson;
+		const sel = selectedLeague;
+		if (sel && !fg.features.some((f) => f.properties.id === sel.id)) {
+			handlePopupClose();
+		}
+	});
+
+	// Recompute map bounds when the filtered set changes.
+	$effect(() => {
+		const fg = filteredGeojson;
+		if (!mapInstance || !fg.features.length) return;
+		const bounds = new maplibregl.LngLatBounds();
+		for (const feature of fg.features) {
+			const [lng, lat] = feature.geometry.coordinates;
+			bounds.extend([lng, lat]);
+		}
+		mapInstance.fitBounds(bounds, { padding: 100, maxZoom: 12 });
+	});
 </script>
 
 <div class="relative flex-1 h-[calc(100svh-3rem)]">
@@ -150,7 +220,7 @@
 		{#if pinImage}
 			<MapImage id="pin-marker" image={pinImage} options={{ sdf: false }} />
 		{/if}
-		<GeoJSONSource id="leagues" data={data.geojson}>
+		<GeoJSONSource id="leagues" data={filteredGeojson}>
 			<SymbolLayer
 				id="league-pins"
 				source="leagues"

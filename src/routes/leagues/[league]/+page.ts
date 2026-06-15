@@ -1,6 +1,22 @@
 import { env } from '$env/dynamic/public';
 import { error } from '@sveltejs/kit';
+import { slugify } from '$lib/utils';
 import type { League, Team, Game, LeagueContact, Organization, Country } from '$lib/types';
+
+export async function entries({ fetch }: { fetch?: typeof globalThis.fetch } = {}) {
+	const apiUrl = env.PUBLIC_API_URL || 'https://backend.openrollerderby.eu';
+	if (!fetch) return [];
+	try {
+		const res = await fetch(`${apiUrl}/items/league?fields=id,name,country,location`);
+		if (!res.ok) return [];
+		const leagues: League[] = (await res.json()).data;
+		return leagues
+			.filter((l) => l.location !== null && l.country)
+			.map((l) => ({ league: `${slugify(l.name)}--${l.id}` }));
+	} catch {
+		return [];
+	}
+}
 
 export async function load({ params, fetch }) {
 	const apiUrl = env.PUBLIC_API_URL || 'https://backend.openrollerderby.eu';
