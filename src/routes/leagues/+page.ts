@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/public';
+import { safeFetch } from '$lib/utils';
 import type {
 	League,
 	Team,
@@ -13,17 +14,18 @@ export async function load({ fetch }) {
 	const apiUrl = env.PUBLIC_API_URL || 'https://backend.openrollerderby.eu';
 
 	const [leaguesRes, teamsRes, contactsRes, orgsRes, gamesRes, countriesRes] = await Promise.all([
-		fetch(
+		safeFetch(
+			fetch,
 			`${apiUrl}/items/league?fields=id,name,country,location.id,location.name,location.address,location.location`
 		),
-		fetch(`${apiUrl}/items/team?fields=*,affiliation.*`),
-		fetch(`${apiUrl}/items/League_Contact`),
-		fetch(`${apiUrl}/items/organization`),
-		fetch(`${apiUrl}/items/game?sort=-date&limit=-1`),
-		fetch(`${apiUrl}/items/countries`)
+		safeFetch(fetch, `${apiUrl}/items/team?fields=*,affiliation.*`),
+		safeFetch(fetch, `${apiUrl}/items/League_Contact`),
+		safeFetch(fetch, `${apiUrl}/items/organization`),
+		safeFetch(fetch, `${apiUrl}/items/game?sort=-date&limit=-1`),
+		safeFetch(fetch, `${apiUrl}/items/countries`)
 	]);
 
-	const { data: leagues }: { data: League[] } = await leaguesRes.json();
+	const leagues: League[] = leaguesRes.ok ? (await leaguesRes.json()).data : [];
 	const teamsData: Team[] = teamsRes.ok ? (await teamsRes.json()).data : [];
 	const contactsData: LeagueContact[] = contactsRes.ok ? (await contactsRes.json()).data : [];
 	const orgsData: Organization[] = orgsRes.ok ? (await orgsRes.json()).data : [];

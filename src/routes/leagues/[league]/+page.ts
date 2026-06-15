@@ -1,5 +1,6 @@
 import { env } from '$env/dynamic/public';
 import { error } from '@sveltejs/kit';
+import { safeFetch } from '$lib/utils';
 import type { League, Team, Game, LeagueContact, Organization, Country } from '$lib/types';
 
 export async function load({ params, fetch }) {
@@ -12,14 +13,15 @@ export async function load({ params, fetch }) {
 
 	// Fetch the league, teams, contacts, organizations, games, and countries
 	const [leagueRes, teamsRes, contactsRes, orgsRes, gamesRes, countriesRes] = await Promise.all([
-		fetch(
+		safeFetch(
+			fetch,
 			`${apiUrl}/items/league/${id}?fields=id,name,country,location.id,location.name,location.address,location.location`
 		),
-		fetch(`${apiUrl}/items/team?fields=*,affiliation.*`),
-		fetch(`${apiUrl}/items/League_Contact?filter[league][_eq]=${id}`),
-		fetch(`${apiUrl}/items/organization`),
-		fetch(`${apiUrl}/items/game?sort=-date&limit=-1`),
-		fetch(`${apiUrl}/items/countries`)
+		safeFetch(fetch, `${apiUrl}/items/team?fields=*,affiliation.*`),
+		safeFetch(fetch, `${apiUrl}/items/League_Contact?filter[league][_eq]=${id}`),
+		safeFetch(fetch, `${apiUrl}/items/organization`),
+		safeFetch(fetch, `${apiUrl}/items/game?sort=-date&limit=-1`),
+		safeFetch(fetch, `${apiUrl}/items/countries`)
 	]);
 
 	if (!leagueRes.ok) {

@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/public';
+import { safeFetch } from '$lib/utils';
 import type { Tournament, Competition, Game, Team, League, Country } from '$lib/types';
 
 export async function load({ fetch }) {
@@ -6,12 +7,12 @@ export async function load({ fetch }) {
 
 	const [tournamentsRes, competitionsRes, gamesRes, teamsRes, leaguesRes, countriesRes] =
 		await Promise.all([
-			fetch(`${apiUrl}/items/tournament?sort=-start_date&fields=*,competition.*`),
-			fetch(`${apiUrl}/items/competition`),
-			fetch(`${apiUrl}/items/game?limit=-1`),
-			fetch(`${apiUrl}/items/team?fields=id,team_league`),
-			fetch(`${apiUrl}/items/league?fields=id,country`),
-			fetch(`${apiUrl}/items/countries`)
+			safeFetch(fetch, `${apiUrl}/items/tournament?sort=-start_date&fields=*,competition.*`),
+			safeFetch(fetch, `${apiUrl}/items/competition`),
+			safeFetch(fetch, `${apiUrl}/items/game?limit=-1`),
+			safeFetch(fetch, `${apiUrl}/items/team?fields=id,team_league`),
+			safeFetch(fetch, `${apiUrl}/items/league?fields=id,country`),
+			safeFetch(fetch, `${apiUrl}/items/countries`)
 		]);
 
 	const tournamentsData: Tournament[] = tournamentsRes.ok ? (await tournamentsRes.json()).data : [];

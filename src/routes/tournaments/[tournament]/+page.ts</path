@@ -11,9 +11,7 @@ export async function load({ params, fetch }) {
 	const doubleDashIndex = slug.lastIndexOf('--');
 	const id = doubleDashIndex !== -1 ? slug.substring(doubleDashIndex + 2) : slug;
 
-	// Fetch the tournament, competitions, teams, and games for this tournament.
-	// safeFetch converts network-level failures (backend down, DNS, etc.) into a
-	// user-friendly 503 error page instead of an opaque `TypeError: fetch failed`.
+	// Fetch the tournament, competitions, teams, and games for this tournament
 	const [tournamentRes, competitionsRes, teamsRes, gamesRes] = await Promise.all([
 		safeFetch(fetch, `${apiUrl}/items/tournament/${id}?fields=*,location.*`),
 		safeFetch(fetch, `${apiUrl}/items/competition`),
