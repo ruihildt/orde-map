@@ -49,56 +49,52 @@
 </script>
 
 <div class="mx-auto w-full max-w-3xl px-6 py-12">
-	<div class="mb-10 flex items-center gap-3">
-		<div class="flex flex-col gap-1">
-			<h1 class="text-2xl font-bold">{data.tournament.tournament_name}</h1>
-			<div class="flex flex-wrap items-center gap-2">
-				{#if competitionName}
-					<Badge variant="secondary">{competitionName}</Badge>
-				{/if}
-			</div>
-		</div>
-	</div>
-
-	<!-- Info section -->
-	<div class="mb-10 space-y-3 text-muted-foreground">
-		<div class="flex items-center gap-2">
-			<Calendar class="size-4" />
-			<span>
-				{formatDate(data.tournament.start_date)}
-				{#if data.tournament.start_date !== data.tournament.end_date}
-					– {formatDate(data.tournament.end_date)}
-				{/if}
-			</span>
-			<!-- Mobile: copy link next to date -->
-			<button
-				class="flex items-center gap-1 ml-2 text-xs hover:text-foreground transition-colors md:hidden"
-				onclick={copyLink}
-			>
-				{#if copied}
-					Copied!
-				{:else}
-					<Link class="size-3" />
-				{/if}
-			</button>
-		</div>
-		{#if data.tournament.location}
+	<div class="mb-10">
+		<div class="flex flex-col gap-0.5">
 			<div class="flex items-center gap-2">
-				<MapPin class="size-4" />
+				<h1 class="text-2xl font-bold">{data.tournament.tournament_name}</h1>
+				<button
+					class="flex items-center gap-1.5 rounded-md border bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+					onclick={copyLink}
+				>
+					{#if copied}
+						Copied!
+					{:else}
+						<Link class="size-3.5" />
+						Copy link
+					{/if}
+				</button>
+			</div>
+			<div class="flex items-center gap-2 text-muted-foreground mt-1">
+				<Calendar class="size-4" />
 				<span>
-					{data.tournament.location.name}
-					{#if data.tournament.location.address}
-						– {data.tournament.location.address}
+					{formatDate(data.tournament.start_date)}
+					{#if data.tournament.start_date !== data.tournament.end_date}
+						– {formatDate(data.tournament.end_date)}
 					{/if}
 				</span>
+				{#if competitionName}
+					<Badge variant="secondary" class="text-[10px]">{competitionName}</Badge>
+				{/if}
 			</div>
-		{/if}
+			{#if data.tournament.location}
+				<div class="flex items-center gap-2 text-muted-foreground mt-0.5">
+					<MapPin class="size-4" />
+					<span>
+						{data.tournament.location.name}
+						{#if data.tournament.location.address}
+							– {data.tournament.location.address}
+						{/if}
+					</span>
+				</div>
+			{/if}
+		</div>
 	</div>
 
-	<!-- Results -->
+	<!-- Games -->
 	{#if data.games.length > 0}
 		<div class="space-y-2">
-			<h2 class="mb-4 text-lg font-semibold">Results</h2>
+			<h2 class="mb-4 text-lg font-semibold">Games</h2>
 			{#each data.games as game (game.id)}
 				<div class="flex w-full items-center gap-4 rounded-lg border bg-card p-4">
 					<!-- Date on the left -->
@@ -119,6 +115,6 @@
 			{/each}
 		</div>
 	{:else}
-		<p class="text-sm text-muted-foreground">No results available for this tournament yet.</p>
+		<p class="text-sm text-muted-foreground">No games available for this tournament yet.</p>
 	{/if}
 </div>

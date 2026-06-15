@@ -59,41 +59,34 @@
 </script>
 
 <div class="mx-auto w-full max-w-3xl px-6 py-12">
-	<div class="mb-10 flex items-center gap-3">
-		<div class="flex flex-col gap-1">
-			<h1 class="text-2xl font-bold">{data.league.name}</h1>
-			<div class="flex flex-wrap items-center gap-2">
-				{#if data.countryName}
-					<Badge variant="secondary">{data.countryName}</Badge>
-				{/if}
-			</div>
-		</div>
-	</div>
-
-	<!-- Info section -->
-	<div class="mb-10 space-y-3 text-muted-foreground">
-		{#if data.league.location}
+	<div class="mb-10">
+		<div class="flex flex-col gap-0.5">
 			<div class="flex items-center gap-2">
-				<MapPin class="size-4" />
-				<span>
-					{data.league.location.name}
-					{#if data.league.location.address}
-						– {data.league.location.address}
-					{/if}
-				</span>
-				<!-- Mobile: copy link next to location -->
+				<h1 class="text-2xl font-bold">{data.league.name}</h1>
 				<button
-					class="flex items-center gap-1 ml-2 text-xs hover:text-foreground transition-colors md:hidden"
+					class="flex items-center gap-1.5 rounded-md border bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
 					onclick={copyLink}
 				>
 					{#if copied}
 						Copied!
 					{:else}
-						<Link class="size-3" />
+						<Link class="size-3.5" />
+						Copy link
 					{/if}
 				</button>
 			</div>
-		{/if}
+			{#if data.countryName || data.league.location}
+				<div class="flex items-center gap-2 text-muted-foreground mt-1">
+					<MapPin class="size-4" />
+					<span>
+						{data.countryName}
+						{#if data.league.location?.address}
+							– {data.league.location.address}
+						{/if}
+					</span>
+				</div>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Contacts -->
@@ -157,12 +150,12 @@
 		</div>
 	{/if}
 
-	<!-- Results -->
+	<!-- Games -->
 	{#if data.games.length > 0}
 		<div class="space-y-2">
 			<div class="flex items-center gap-1.5">
 				<Calendar class="size-4 text-muted-foreground" />
-				<h2 class="text-lg font-semibold">Results</h2>
+				<h2 class="text-lg font-semibold">Games</h2>
 			</div>
 			{#each groupedGames as group (group.key)}
 				<div class="mb-4">
@@ -189,6 +182,6 @@
 			{/each}
 		</div>
 	{:else}
-		<p class="text-sm text-muted-foreground">No results available for this league yet.</p>
+		<p class="text-sm text-muted-foreground">No games available for this league yet.</p>
 	{/if}
 </div>

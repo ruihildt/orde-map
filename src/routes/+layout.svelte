@@ -5,9 +5,8 @@
 		PUBLIC_UMAMI_SCRIPT_URL,
 		PUBLIC_UMAMI_WEBSITE_ID
 	} from '$env/static/public';
-	import { SidebarProvider, SidebarInset } from '$lib/components/ui/sidebar';
+	import { SidebarProvider, SidebarInset, SidebarTrigger } from '$lib/components/ui/sidebar';
 	import AppSidebar from '$lib/components/AppSidebar.svelte';
-	import TitleBar from '$lib/components/TitleBar.svelte';
 	import { page } from '$app/state';
 
 	let { children } = $props();
@@ -47,7 +46,10 @@
 <SidebarProvider>
 	<AppSidebar />
 	<SidebarInset>
-		<TitleBar />
+		<!-- Mobile sidebar toggle -->
+		<div class="fixed left-4 top-4 z-50 md:hidden">
+			<SidebarTrigger />
+		</div>
 		{@render children()}
 	</SidebarInset>
 </SidebarProvider>
