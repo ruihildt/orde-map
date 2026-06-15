@@ -36,10 +36,8 @@
 		!!leagueData?.geojson && !!leagueData.teams && !!leagueData.organizations
 	);
 
-	const navMenuItems = [
-		{ label: 'Leagues', icon: MapPin, href: '/leagues/' },
-		{ label: 'Tournaments', icon: Trophy, href: '/tournaments/' }
-	];
+	const leaguesMenuItem = { label: 'Leagues', icon: MapPin, href: '/leagues/' };
+	const tournamentsMenuItem = { label: 'Tournaments', icon: Trophy, href: '/tournaments/' };
 
 	const secondaryMenuItems = [
 		{ label: 'About', icon: Info, href: '/about/' },
@@ -66,40 +64,52 @@
 		<SidebarGroup>
 			<SidebarGroupContent>
 				<SidebarMenu>
-					{#each navMenuItems as item (item.label)}
-						<SidebarMenuItem>
-							<!-- eslint-disable-next-line -->
-							<a href={item.href} class="block cursor-pointer">
-								<SidebarMenuButton
-									tooltipContent={item.label}
-									size="lg"
-									isActive={currentPath === item.href}
-								>
-									<item.icon class="size-5" />
-									<span class="text-base">{item.label}</span>
-								</SidebarMenuButton>
-							</a>
-						</SidebarMenuItem>
-					{/each}
+					<!-- Leagues -->
+					<SidebarMenuItem>
+						<!-- eslint-disable-next-line -->
+						<a href={leaguesMenuItem.href} class="block cursor-pointer">
+							<SidebarMenuButton
+								tooltipContent={leaguesMenuItem.label}
+								size="lg"
+								isActive={currentPath === leaguesMenuItem.href}
+							>
+								<leaguesMenuItem.icon class="size-5" />
+								<span class="text-base">{leaguesMenuItem.label}</span>
+							</SidebarMenuButton>
+						</a>
+					</SidebarMenuItem>
+
+					<!-- Filters (only on leagues map page, under Leagues menu item) -->
+					{#if canShowFilters && leagueData?.geojson && leagueData.teams && leagueData.organizations}
+						<div class="overflow-y-auto">
+							<LeagueFilters
+								geojson={leagueData.geojson}
+								teams={leagueData.teams}
+								organizations={leagueData.organizations}
+							/>
+						</div>
+					{/if}
+
+					<!-- Tournaments -->
+					<SidebarMenuItem>
+						<!-- eslint-disable-next-line -->
+						<a href={tournamentsMenuItem.href} class="block cursor-pointer">
+							<SidebarMenuButton
+								tooltipContent={tournamentsMenuItem.label}
+								size="lg"
+								isActive={currentPath === tournamentsMenuItem.href}
+							>
+								<tournamentsMenuItem.icon class="size-5" />
+								<span class="text-base">{tournamentsMenuItem.label}</span>
+							</SidebarMenuButton>
+						</a>
+					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarGroupContent>
 		</SidebarGroup>
 
-		<!-- Filters (only on leagues map page) -->
-		{#if canShowFilters && leagueData?.geojson && leagueData.teams && leagueData.organizations}
-			<div class="flex-1 overflow-y-auto">
-				<LeagueFilters
-					geojson={leagueData.geojson}
-					teams={leagueData.teams}
-					organizations={leagueData.organizations}
-				/>
-			</div>
-		{/if}
-
 		<!-- Spacer to push secondary items to bottom -->
-		{#if !canShowFilters}
-			<div class="flex-1"></div>
-		{/if}
+		<div class="flex-1"></div>
 
 		<!-- Secondary Menu -->
 		<SidebarGroup>

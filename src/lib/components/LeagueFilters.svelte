@@ -49,9 +49,9 @@
 	);
 
 	// --- UI state for collapsible sections ---
-	let countryOpen = $state(true);
-	let orgOpen = $state(true);
-	let teamTypeOpen = $state(true);
+	let countryOpen = $state(false);
+	let orgOpen = $state(false);
+	let teamTypeOpen = $state(false);
 	let countrySearch = $state('');
 
 	let filteredCountries = $derived(
