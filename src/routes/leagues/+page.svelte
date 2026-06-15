@@ -4,7 +4,8 @@
 		GeoJSONSource,
 		SymbolLayer,
 		Image as MapImage,
-		NavigationControl
+		NavigationControl,
+		Popup
 	} from 'svelte-maplibre-gl';
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
@@ -16,7 +17,7 @@
 		Organization,
 		Game
 	} from '$lib/types';
-	import LeagueModal from '$lib/components/LeagueModal.svelte';
+	import LeaguePopupContent from '$lib/components/LeaguePopupContent.svelte';
 
 	type PageData = {
 		geojson: LeagueFeatureCollection;
@@ -33,6 +34,8 @@
 	let pinImage: HTMLImageElement | undefined = $state(undefined);
 
 	let selectedLeague: LeagueProperties | null = $state(null);
+	let selectedLngLat: maplibregl.LngLatLike | null = $state(null);
+	let popupOpen = $state(false);
 
 	const pinSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">
 		<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25C30 6.716 23.284 0 15 0z" fill="#e63946" stroke="#fff" stroke-width="1.5"/>
@@ -62,14 +65,18 @@
 	});
 
 	function handleClick(
-		e: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }
+		e: maplibregl.MapMouseEvent & {
+			features?: maplibregl.MapGeoJSONFeature[];
+		}
 	) {
 		if (e.features && e.features.length > 0) {
 			const feature = e.features[0];
 			const id = feature.properties?.id ?? '';
-			// Toggle: if clicking the already-selected pin, close the modal
+			// Toggle: if clicking the already-selected pin, close the popup
 			if (selectedLeague?.id === id) {
 				selectedLeague = null;
+				selectedLngLat = null;
+				popupOpen = false;
 				return;
 			}
 			const leagueFeature = data.geojson.features.find((f) => f.properties.id === id);
@@ -80,12 +87,16 @@
 					country: leagueFeature.properties.country,
 					address: leagueFeature.properties.address
 				};
+				selectedLngLat = leagueFeature.geometry.coordinates as [number, number];
+				popupOpen = true;
 			}
 		}
 	}
 
-	function closeModal() {
+	function handlePopupClose() {
 		selectedLeague = null;
+		selectedLngLat = null;
+		popupOpen = false;
 	}
 
 	function handlePinMouseEnter(e: maplibregl.MapMouseEvent & { target?: maplibregl.Map }) {
@@ -175,16 +186,29 @@
 				onmouseleave={handlePinMouseLeave}
 			/>
 		</GeoJSONSource>
+		{#if selectedLeague && selectedLngLat}
+			<Popup
+				lnglat={selectedLngLat}
+				bind:open={popupOpen}
+				closeButton={false}
+				closeOnClick={true}
+				closeOnMove={false}
+				offset={20}
+				maxWidth="320px"
+				class="league-popup"
+				onclose={handlePopupClose}
+			>
+				<LeaguePopupContent
+					league={selectedLeague}
+					teams={data.teams}
+					contacts={data.contacts}
+					organizations={data.organizations}
+					onClose={handlePopupClose}
+				/>
+			</Popup>
+		{/if}
 	</MapLibreMap>
 </div>
-
-<LeagueModal
-	league={selectedLeague}
-	teams={data.teams}
-	contacts={data.contacts}
-	organizations={data.organizations}
-	onClose={closeModal}
-/>
 
 <style>
 	:global(.map) {
@@ -198,5 +222,15 @@
 	:global(.maplibregl-map) {
 		width: 100%;
 		height: 100%;
+	}
+
+	:global(.league-popup .maplibregl-popup-content) {
+		padding: 0;
+		border-radius: var(--radius-lg);
+		background: var(--popover);
+		color: var(--popover-foreground);
+		box-shadow:
+			0 10px 15px -3px rgb(0 0 0 / 0.1),
+			0 4px 6px -4px rgb(0 0 0 / 0.1);
 	}
 </style>
