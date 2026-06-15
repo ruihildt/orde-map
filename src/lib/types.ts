@@ -60,6 +60,7 @@ export interface Organization {
 export interface Game {
 	id: string;
 	date: string;
+	start_time: string | null;
 	home_team_score: number;
 	away_team_score: number;
 	home_team: string;
@@ -72,6 +73,28 @@ export interface LeagueContact {
 	Type: string;
 	name: string | null;
 	email: string;
+}
+
+export interface Competition {
+	id: number;
+	name: string;
+	organization: number[];
+	countries: number[];
+}
+
+export interface Tournament {
+	id: string;
+	tournament_name: string;
+	start_date: string;
+	end_date: string;
+	competition: number | null;
+	location: {
+		id: number;
+		name: string;
+		address: string;
+		location: Point;
+	} | null;
+	game: string[];
 }
 
 export interface FeatureCollection<T> {

@@ -9,7 +9,7 @@
 		SidebarMenuButton,
 		SidebarMenuItem
 	} from '$lib/components/ui/sidebar';
-	import { ArrowLeft, MapPin, Info, ScrollText, Link } from '@lucide/svelte';
+	import { ArrowLeft, MapPin, Info, ScrollText, Link, Trophy } from '@lucide/svelte';
 	import logo from '$lib/assets/skate.png';
 	import { useSidebar } from '$lib/components/ui/sidebar';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -69,7 +69,10 @@
 		}))
 	);
 
-	const navMenuItems = [{ label: 'Leagues', icon: MapPin, href: '/leagues/' }];
+	const navMenuItems = [
+		{ label: 'Leagues', icon: MapPin, href: '/leagues/' },
+		{ label: 'Tournaments', icon: Trophy, href: '/tournaments/' }
+	];
 
 	const secondaryMenuItems = [
 		{ label: 'About', icon: Info, href: '/about/' },

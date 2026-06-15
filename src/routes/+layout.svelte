@@ -15,17 +15,25 @@
 
 	const pageTitles: Record<string, string> = {
 		'/leagues/': 'Leagues',
+		'/tournaments/': 'Tournaments',
 		'/license/': 'License',
 		'/about/': 'About'
 	};
 
-	let pageTitle = $derived(
-		page.url.pathname === '/leagues/' && $selectedLeague
-			? `${$selectedLeague.name} – Open Roller Derby Europe`
-			: page.url.pathname === '/'
-				? 'Open Roller Derby Europe'
-				: `${pageTitles[page.url.pathname] ?? ''} – Open Roller Derby Europe`
-	);
+	let pageTitle = $derived.by(() => {
+		if (page.url.pathname === '/leagues/' && $selectedLeague) {
+			return `${$selectedLeague.name} – Open Roller Derby Europe`;
+		}
+		if (page.url.pathname.startsWith('/tournaments/') && page.url.pathname !== '/tournaments/') {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const name = (page.data as any)?.tournament?.tournament_name;
+			return `${name ?? 'Tournament'} – Open Roller Derby Europe`;
+		}
+		if (page.url.pathname === '/') {
+			return 'Open Roller Derby Europe';
+		}
+		return `${pageTitles[page.url.pathname] ?? ''} – Open Roller Derby Europe`;
+	});
 </script>
 
 <svelte:head>

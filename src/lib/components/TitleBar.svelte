@@ -9,20 +9,28 @@
 
 	const pageTitles: Record<string, string> = {
 		'/leagues/': 'Leagues',
+		'/tournaments/': 'Tournaments',
 		'/license/': 'License',
 		'/about/': 'About'
 	};
 
-	let title = $derived(
-		page.url.pathname === '/leagues/' && $selectedLeague
-			? $selectedLeague.name
-			: (pageTitles[page.url.pathname] ?? 'Open Roller Derby Europe')
-	);
+	let title = $derived.by(() => {
+		if (page.url.pathname === '/leagues/' && $selectedLeague) {
+			return $selectedLeague.name;
+		}
+		if (page.url.pathname.startsWith('/tournaments/') && page.url.pathname !== '/tournaments/') {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			return (page.data as any)?.tournament?.tournament_name ?? 'Tournament';
+		}
+		return pageTitles[page.url.pathname] ?? 'Open Roller Derby Europe';
+	});
 
 	let breadcrumbs = $derived(
 		page.url.pathname === '/leagues/' && $selectedLeague
 			? [{ label: 'Leagues', href: '/leagues/' }, { label: $selectedLeague.name }]
-			: null
+			: page.url.pathname.startsWith('/tournaments/') && page.url.pathname !== '/tournaments/'
+				? [{ label: 'Tournaments', href: '/tournaments/' }, { label: title }]
+				: null
 	);
 
 	let copied = $state(false);
