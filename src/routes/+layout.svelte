@@ -25,6 +25,11 @@
 			const name = (page.data as any)?.tournament?.tournament_name;
 			return `${name ?? 'Tournament'} – Open Roller Derby Europe`;
 		}
+		if (page.url.pathname.startsWith('/leagues/') && page.url.pathname !== '/leagues/') {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const name = (page.data as any)?.league?.name;
+			return `${name ?? 'League'} – Open Roller Derby Europe`;
+		}
 		if (page.url.pathname === '/') {
 			return 'Open Roller Derby Europe';
 		}

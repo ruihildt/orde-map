@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { X, MapPin, Mail, Users } from '@lucide/svelte';
+	import { X, MapPin, Mail, Users, ExternalLink } from '@lucide/svelte';
 	import type { LeagueProperties, Team, LeagueContact, Organization } from '$lib/types';
+	import { slugify } from '$lib/utils';
 
 	let {
 		league = null,
@@ -26,6 +27,10 @@
 		if (e.key === 'Escape') {
 			onClose();
 		}
+	}
+
+	function leagueHref(l: LeagueProperties): string {
+		return `/leagues/${slugify(l.name)}--${l.id}`;
 	}
 </script>
 
@@ -57,7 +62,16 @@
 
 			<!-- Header -->
 			<div class="px-6 pt-6 pb-2">
-				<h2 class="text-xl font-bold text-foreground pr-8">{league.name}</h2>
+				<div class="flex items-start justify-between gap-2 pr-8">
+					<h2 class="text-xl font-bold text-foreground">{league.name}</h2>
+				</div>
+				<div class="mt-2">
+					<!-- eslint-disable-next-line -->
+					<a href={leagueHref(league)} class="league-details-link">
+						<ExternalLink class="size-3.5" />
+						View details
+					</a>
+				</div>
 			</div>
 
 			<!-- Content -->
@@ -155,3 +169,17 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	.league-details-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: hsl(var(--primary));
+	}
+	.league-details-link:hover {
+		text-decoration: underline;
+	}
+</style>

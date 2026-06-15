@@ -18,14 +18,22 @@
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			return (page.data as any)?.tournament?.tournament_name ?? 'Tournament';
 		}
+		if (page.url.pathname.startsWith('/leagues/') && page.url.pathname !== '/leagues/') {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			return (page.data as any)?.league?.name ?? 'League';
+		}
 		return pageTitles[page.url.pathname] ?? 'Open Roller Derby Europe';
 	});
 
-	let breadcrumbs = $derived(
-		page.url.pathname.startsWith('/tournaments/') && page.url.pathname !== '/tournaments/'
-			? [{ label: 'Tournaments', href: '/tournaments/' }, { label: title }]
-			: null
-	);
+	let breadcrumbs = $derived.by(() => {
+		if (page.url.pathname.startsWith('/tournaments/') && page.url.pathname !== '/tournaments/') {
+			return [{ label: 'Tournaments', href: '/tournaments/' }, { label: title }];
+		}
+		if (page.url.pathname.startsWith('/leagues/') && page.url.pathname !== '/leagues/') {
+			return [{ label: 'Leagues', href: '/leagues/' }, { label: title }];
+		}
+		return null;
+	});
 
 	let copied = $state(false);
 
