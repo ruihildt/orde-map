@@ -8,7 +8,6 @@
 	import { SidebarProvider, SidebarInset } from '$lib/components/ui/sidebar';
 	import AppSidebar from '$lib/components/AppSidebar.svelte';
 	import TitleBar from '$lib/components/TitleBar.svelte';
-	import { selectedLeague } from '$lib/stores';
 	import { page } from '$app/state';
 
 	let { children } = $props();
@@ -21,9 +20,6 @@
 	};
 
 	let pageTitle = $derived.by(() => {
-		if (page.url.pathname === '/leagues/' && $selectedLeague) {
-			return `${$selectedLeague.name} – Open Roller Derby Europe`;
-		}
 		if (page.url.pathname.startsWith('/tournaments/') && page.url.pathname !== '/tournaments/') {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const name = (page.data as any)?.tournament?.tournament_name;

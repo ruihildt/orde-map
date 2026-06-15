@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { useSidebar } from '$lib/components/ui/sidebar';
 	import { Menu, X, Link } from '@lucide/svelte';
-	import { selectedLeague } from '$lib/stores';
 	import logo from '$lib/assets/skate.png';
 	import { page } from '$app/state';
 
@@ -15,9 +14,6 @@
 	};
 
 	let title = $derived.by(() => {
-		if (page.url.pathname === '/leagues/' && $selectedLeague) {
-			return $selectedLeague.name;
-		}
 		if (page.url.pathname.startsWith('/tournaments/') && page.url.pathname !== '/tournaments/') {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			return (page.data as any)?.tournament?.tournament_name ?? 'Tournament';
@@ -26,11 +22,9 @@
 	});
 
 	let breadcrumbs = $derived(
-		page.url.pathname === '/leagues/' && $selectedLeague
-			? [{ label: 'Leagues', href: '/leagues/' }, { label: $selectedLeague.name }]
-			: page.url.pathname.startsWith('/tournaments/') && page.url.pathname !== '/tournaments/'
-				? [{ label: 'Tournaments', href: '/tournaments/' }, { label: title }]
-				: null
+		page.url.pathname.startsWith('/tournaments/') && page.url.pathname !== '/tournaments/'
+			? [{ label: 'Tournaments', href: '/tournaments/' }, { label: title }]
+			: null
 	);
 
 	let copied = $state(false);

@@ -10,11 +10,13 @@
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import type {
 		LeagueFeatureCollection,
+		LeagueProperties,
 		Team,
 		LeagueContact,
 		Organization,
 		Game
 	} from '$lib/types';
+	import LeagueModal from '$lib/components/LeagueModal.svelte';
 
 	type PageData = {
 		geojson: LeagueFeatureCollection;
@@ -24,25 +26,13 @@
 		games: Game[];
 	};
 	import { onMount } from 'svelte';
-	import { selectedLeague, leagueData } from '$lib/stores';
-	import { slugify } from '$lib/utils';
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
 
-	// Store data in the shared store
-	$effect(() => {
-		$leagueData = {
-			teams: data.teams,
-			contacts: data.contacts,
-			organizations: data.organizations,
-			games: data.games
-		};
-	});
-
 	let mapInstance: maplibregl.Map | undefined = $state(undefined);
 	let pinImage: HTMLImageElement | undefined = $state(undefined);
+
+	let selectedLeague: LeagueProperties | null = $state(null);
 
 	const pinSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">
 		<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25C30 6.716 23.284 0 15 0z" fill="#e63946" stroke="#fff" stroke-width="1.5"/>
@@ -53,36 +43,6 @@
 		<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25C30 6.716 23.284 0 15 0z" fill="#9ca3af" stroke="#fff" stroke-width="1.5"/>
 		<circle cx="15" cy="14" r="6" fill="#fff"/>
 	</svg>`;
-
-	// Derive selected league param from URL (format: "slug--id")
-	let selectedLeagueParam = $derived(page.url.searchParams.get('league') ?? '');
-
-	// Extract the ID from the "--id" suffix for reliable lookup
-	let selectedLeagueId = $derived.by(() => {
-		const doubleDashIndex = selectedLeagueParam.lastIndexOf('--');
-		if (doubleDashIndex !== -1) {
-			return selectedLeagueParam.substring(doubleDashIndex + 2);
-		}
-		return '';
-	});
-
-	// Sync URL param to the selectedLeague store
-	$effect(() => {
-		const id = selectedLeagueId;
-		if (id) {
-			const feature = data.geojson.features.find((f) => f.properties.id === id);
-			if (feature) {
-				$selectedLeague = {
-					id: feature.properties.id,
-					name: feature.properties.name,
-					country: feature.properties.country,
-					address: feature.properties.address
-				};
-			}
-		} else {
-			$selectedLeague = null;
-		}
-	});
 
 	onMount(() => {
 		const img = document.createElement('img');
@@ -107,18 +67,25 @@
 		if (e.features && e.features.length > 0) {
 			const feature = e.features[0];
 			const id = feature.properties?.id ?? '';
-			const name = feature.properties?.name ?? '';
-			const slug = slugify(name);
-			const param = `${slug}--${id}`;
-			if (selectedLeagueId === id) {
-				// Deselect
-				// eslint-disable-next-line
-				goto('/leagues/', { replaceState: true });
-			} else {
-				// eslint-disable-next-line
-				goto(`/leagues/?league=${encodeURIComponent(param)}`, { replaceState: true });
+			// Toggle: if clicking the already-selected pin, close the modal
+			if (selectedLeague?.id === id) {
+				selectedLeague = null;
+				return;
+			}
+			const leagueFeature = data.geojson.features.find((f) => f.properties.id === id);
+			if (leagueFeature) {
+				selectedLeague = {
+					id: leagueFeature.properties.id,
+					name: leagueFeature.properties.name,
+					country: leagueFeature.properties.country,
+					address: leagueFeature.properties.address
+				};
 			}
 		}
+	}
+
+	function closeModal() {
+		selectedLeague = null;
 	}
 
 	function handlePinMouseEnter(e: maplibregl.MapMouseEvent & { target?: maplibregl.Map }) {
@@ -144,15 +111,17 @@
 	}
 
 	// Dynamic icon-image: use grey pin for non-selected when a league is selected
-	let pinIconExpression = $derived(
-		selectedLeagueId
-			? ['case', ['==', ['get', 'id'], selectedLeagueId], 'pin-marker', 'pin-marker-grey']
-			: 'pin-marker'
-	);
+	let pinIconExpression = $derived.by(() => {
+		const sel = selectedLeague;
+		return sel
+			? ['case', ['==', ['get', 'id'], sel.id], 'pin-marker', 'pin-marker-grey']
+			: 'pin-marker';
+	});
 
-	let pinLabelOpacityExpression = $derived(
-		selectedLeagueId ? ['case', ['==', ['get', 'id'], selectedLeagueId], 1, 0.4] : 1
-	);
+	let pinLabelOpacityExpression = $derived.by(() => {
+		const sel = selectedLeague;
+		return sel ? ['case', ['==', ['get', 'id'], sel.id], 1, 0.4] : 1;
+	});
 </script>
 
 <div class="relative flex-1 h-[calc(100svh-3rem)]">
@@ -208,6 +177,14 @@
 		</GeoJSONSource>
 	</MapLibreMap>
 </div>
+
+<LeagueModal
+	league={selectedLeague}
+	teams={data.teams}
+	contacts={data.contacts}
+	organizations={data.organizations}
+	onClose={closeModal}
+/>
 
 <style>
 	:global(.map) {

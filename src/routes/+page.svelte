@@ -10,11 +10,13 @@
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import type {
 		LeagueFeatureCollection,
+		LeagueProperties,
 		Team,
 		LeagueContact,
 		Organization,
 		Game
 	} from '$lib/types';
+	import LeagueModal from '$lib/components/LeagueModal.svelte';
 
 	type PageData = {
 		geojson: LeagueFeatureCollection;
@@ -24,27 +26,21 @@
 		games: Game[];
 	};
 	import { onMount } from 'svelte';
-	import { SidebarProvider, SidebarInset } from '$lib/components/ui/sidebar';
-	import AppSidebar from '$lib/components/AppSidebar.svelte';
-	import TitleBar from '$lib/components/TitleBar.svelte';
-	import { selectedLeague, leagueData } from '$lib/stores';
 
 	let { data }: { data: PageData } = $props();
-
-	$effect(() => {
-		leagueData.set({
-			teams: data.teams,
-			contacts: data.contacts,
-			organizations: data.organizations,
-			games: data.games
-		});
-	});
 
 	let mapInstance: maplibregl.Map | undefined = $state(undefined);
 	let pinImage: HTMLImageElement | undefined = $state(undefined);
 
+	let selectedLeague: LeagueProperties | null = $state(null);
+
 	const pinSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">
 		<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25C30 6.716 23.284 0 15 0z" fill="#e63946" stroke="#fff" stroke-width="1.5"/>
+		<circle cx="15" cy="14" r="6" fill="#fff"/>
+	</svg>`;
+
+	const greyPinSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">
+		<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25C30 6.716 23.284 0 15 0z" fill="#9ca3af" stroke="#fff" stroke-width="1.5"/>
 		<circle cx="15" cy="14" r="6" fill="#fff"/>
 	</svg>`;
 
@@ -54,6 +50,15 @@
 		img.onload = () => {
 			pinImage = img;
 		};
+
+		// Also load grey pin image
+		const greyImg = document.createElement('img');
+		greyImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(greyPinSvg);
+		greyImg.onload = () => {
+			if (mapInstance) {
+				mapInstance.addImage('pin-marker-grey', greyImg, { sdf: false });
+			}
+		};
 	});
 
 	function handleClick(
@@ -61,13 +66,26 @@
 	) {
 		if (e.features && e.features.length > 0) {
 			const feature = e.features[0];
-			$selectedLeague = {
-				id: feature.properties?.id ?? '',
-				name: feature.properties?.name ?? '',
-				country: feature.properties?.country ?? null,
-				address: feature.properties?.address ?? null
-			};
+			const id = feature.properties?.id ?? '';
+			// Toggle: if clicking the already-selected pin, close the modal
+			if (selectedLeague?.id === id) {
+				selectedLeague = null;
+				return;
+			}
+			const leagueFeature = data.geojson.features.find((f) => f.properties.id === id);
+			if (leagueFeature) {
+				selectedLeague = {
+					id: leagueFeature.properties.id,
+					name: leagueFeature.properties.name,
+					country: leagueFeature.properties.country,
+					address: leagueFeature.properties.address
+				};
+			}
 		}
+	}
+
+	function closeModal() {
+		selectedLeague = null;
 	}
 
 	function handlePinMouseEnter(e: maplibregl.MapMouseEvent & { target?: maplibregl.Map }) {
@@ -91,66 +109,82 @@
 		}
 		mapInstance.fitBounds(bounds, { padding: 100, maxZoom: 12 });
 	}
+
+	// Dynamic icon-image: use grey pin for non-selected when a league is selected
+	let pinIconExpression = $derived.by(() => {
+		const sel = selectedLeague;
+		return sel
+			? ['case', ['==', ['get', 'id'], sel.id], 'pin-marker', 'pin-marker-grey']
+			: 'pin-marker';
+	});
+
+	let pinLabelOpacityExpression = $derived.by(() => {
+		const sel = selectedLeague;
+		return sel ? ['case', ['==', ['get', 'id'], sel.id], 1, 0.4] : 1;
+	});
 </script>
 
-<SidebarProvider>
-	<AppSidebar />
-	<SidebarInset>
-		<TitleBar />
-		<div class="relative flex-1 h-[calc(100svh-3rem)]">
-			<MapLibreMap
-				autoloadGlobalCss={false}
-				style="https://tiles.openfreemap.org/styles/liberty"
-				center={{ lng: 10, lat: 48 }}
-				zoom={3}
-				dragRotate={false}
-				class="map"
-				bind:map={mapInstance}
-				onload={handleMapLoad}
-			>
-				<NavigationControl position="top-right" showCompass={false} />
-				{#if pinImage}
-					<MapImage id="pin-marker" image={pinImage} options={{ sdf: false }} />
-				{/if}
-				<GeoJSONSource id="leagues" data={data.geojson}>
-					<SymbolLayer
-						id="league-pins"
-						source="leagues"
-						layout={{
-							'icon-image': 'pin-marker',
-							'icon-size': 0.9,
-							'icon-anchor': 'bottom',
-							'icon-allow-overlap': true
-						}}
-						onclick={handleClick}
-						onmouseenter={handlePinMouseEnter}
-						onmouseleave={handlePinMouseLeave}
-					/>
-					<SymbolLayer
-						id="league-labels"
-						source="leagues"
-						layout={{
-							'text-field': ['get', 'name'],
-							'text-size': 13,
-							'text-offset': [0, 0.2],
-							'text-anchor': 'top',
-							'text-optional': true,
-							'text-allow-overlap': false
-						}}
-						paint={{
-							'text-color': '#000000',
-							'text-halo-color': '#ffffff',
-							'text-halo-width': 1.5
-						}}
-						onclick={handleClick}
-						onmouseenter={handlePinMouseEnter}
-						onmouseleave={handlePinMouseLeave}
-					/>
-				</GeoJSONSource>
-			</MapLibreMap>
-		</div>
-	</SidebarInset>
-</SidebarProvider>
+<div class="relative flex-1 h-[calc(100svh-3rem)]">
+	<MapLibreMap
+		autoloadGlobalCss={false}
+		style="https://tiles.openfreemap.org/styles/liberty"
+		center={{ lng: 10, lat: 48 }}
+		zoom={3}
+		dragRotate={false}
+		class="map"
+		bind:map={mapInstance}
+		onload={handleMapLoad}
+	>
+		<NavigationControl position="top-right" showCompass={false} />
+		{#if pinImage}
+			<MapImage id="pin-marker" image={pinImage} options={{ sdf: false }} />
+		{/if}
+		<GeoJSONSource id="leagues" data={data.geojson}>
+			<SymbolLayer
+				id="league-pins"
+				source="leagues"
+				layout={{
+					'icon-image': pinIconExpression as unknown as string,
+					'icon-size': 0.9,
+					'icon-anchor': 'bottom',
+					'icon-allow-overlap': true
+				}}
+				onclick={handleClick}
+				onmouseenter={handlePinMouseEnter}
+				onmouseleave={handlePinMouseLeave}
+			/>
+			<SymbolLayer
+				id="league-labels"
+				source="leagues"
+				layout={{
+					'text-field': ['get', 'name'],
+					'text-size': 13,
+					'text-offset': [0, 0.2],
+					'text-anchor': 'top',
+					'text-optional': true,
+					'text-allow-overlap': false
+				}}
+				paint={{
+					'text-color': '#000000',
+					'text-halo-color': '#ffffff',
+					'text-halo-width': 1.5,
+					'text-opacity': pinLabelOpacityExpression as unknown as number
+				}}
+				onclick={handleClick}
+				onmouseenter={handlePinMouseEnter}
+				onmouseleave={handlePinMouseLeave}
+			/>
+		</GeoJSONSource>
+	</MapLibreMap>
+</div>
+
+<LeagueModal
+	league={selectedLeague}
+	teams={data.teams}
+	contacts={data.contacts}
+	organizations={data.organizations}
+	onClose={closeModal}
+/>
 
 <style>
 	:global(body) {
