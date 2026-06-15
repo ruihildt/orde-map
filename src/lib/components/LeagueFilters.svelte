@@ -106,7 +106,7 @@
 				<button
 					type="button"
 					onclick={clearAll}
-					class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+					class="inline-flex items-center rounded-md border border-input bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-1 focus-visible:ring-ring focus:outline-none"
 				>
 					Clear
 				</button>
