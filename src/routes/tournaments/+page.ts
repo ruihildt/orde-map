@@ -1,19 +1,32 @@
 import { env } from '$env/dynamic/public';
-import { safeFetch } from '$lib/utils';
+import { error } from '@sveltejs/kit';
 import type { Tournament, Competition, Game, Team, League, Country } from '$lib/types';
 
 export async function load({ fetch }) {
 	const apiUrl = env.PUBLIC_API_URL || 'https://backend.openrollerderby.eu';
 
-	const [tournamentsRes, competitionsRes, gamesRes, teamsRes, leaguesRes, countriesRes] =
-		await Promise.all([
-			safeFetch(fetch, `${apiUrl}/items/tournament?sort=-start_date&fields=*,competition.*`),
-			safeFetch(fetch, `${apiUrl}/items/competition`),
-			safeFetch(fetch, `${apiUrl}/items/game?limit=-1`),
-			safeFetch(fetch, `${apiUrl}/items/team?fields=id,team_league`),
-			safeFetch(fetch, `${apiUrl}/items/league?fields=id,country`),
-			safeFetch(fetch, `${apiUrl}/items/countries`)
-		]);
+	let tournamentsRes: Response;
+	let competitionsRes: Response;
+	let gamesRes: Response;
+	let teamsRes: Response;
+	let leaguesRes: Response;
+	let countriesRes: Response;
+	try {
+		[tournamentsRes, competitionsRes, gamesRes, teamsRes, leaguesRes, countriesRes] =
+			await Promise.all([
+				fetch(`${apiUrl}/items/tournament?sort=-start_date&fields=*,competition.*`),
+				fetch(`${apiUrl}/items/competition`),
+				fetch(`${apiUrl}/items/game?limit=-1`),
+				fetch(`${apiUrl}/items/team?fields=id,team_league`),
+				fetch(`${apiUrl}/items/league?fields=id,country`),
+				fetch(`${apiUrl}/items/countries`)
+			]);
+	} catch {
+		error(
+			503,
+			'We could not reach the data server. The service may be down or your connection may have dropped. Please try again in a moment.'
+		);
+	}
 
 	const tournamentsData: Tournament[] = tournamentsRes.ok ? (await tournamentsRes.json()).data : [];
 	const competitionsData: Competition[] = competitionsRes.ok

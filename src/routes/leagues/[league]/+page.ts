@@ -1,6 +1,5 @@
 import { env } from '$env/dynamic/public';
 import { error } from '@sveltejs/kit';
-import { safeFetch } from '$lib/utils';
 import type { League, Team, Game, LeagueContact, Organization, Country } from '$lib/types';
 
 export async function load({ params, fetch }) {
@@ -11,21 +10,32 @@ export async function load({ params, fetch }) {
 	const doubleDashIndex = slug.lastIndexOf('--');
 	const id = doubleDashIndex !== -1 ? slug.substring(doubleDashIndex + 2) : slug;
 
-	// Fetch the league, teams, contacts, organizations, games, and countries
-	const [leagueRes, teamsRes, contactsRes, orgsRes, gamesRes, countriesRes] = await Promise.all([
-		safeFetch(
-			fetch,
-			`${apiUrl}/items/league/${id}?fields=id,name,country,location.id,location.name,location.address,location.location`
-		),
-		safeFetch(fetch, `${apiUrl}/items/team?fields=*,affiliation.*`),
-		safeFetch(fetch, `${apiUrl}/items/League_Contact?filter[league][_eq]=${id}`),
-		safeFetch(fetch, `${apiUrl}/items/organization`),
-		safeFetch(fetch, `${apiUrl}/items/game?sort=-date&limit=-1`),
-		safeFetch(fetch, `${apiUrl}/items/countries`)
-	]);
+	let leagueRes: Response;
+	let teamsRes: Response;
+	let contactsRes: Response;
+	let orgsRes: Response;
+	let gamesRes: Response;
+	let countriesRes: Response;
+	try {
+		[leagueRes, teamsRes, contactsRes, orgsRes, gamesRes, countriesRes] = await Promise.all([
+			fetch(
+				`${apiUrl}/items/league/${id}?fields=id,name,country,location.id,location.name,location.address,location.location`
+			),
+			fetch(`${apiUrl}/items/team?fields=*,affiliation.*`),
+			fetch(`${apiUrl}/items/League_Contact?filter[league][_eq]=${id}`),
+			fetch(`${apiUrl}/items/organization`),
+			fetch(`${apiUrl}/items/game?sort=-date&limit=-1`),
+			fetch(`${apiUrl}/items/countries`)
+		]);
+	} catch {
+		error(
+			503,
+			'We could not reach the data server. The service may be down or your connection may have dropped. Please try again in a moment.'
+		);
+	}
 
 	if (!leagueRes.ok) {
-		throw error(404, 'League not found');
+		error(404, 'League not found');
 	}
 
 	const league: League = (await leagueRes.json()).data;

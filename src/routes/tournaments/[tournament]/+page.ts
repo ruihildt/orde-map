@@ -1,6 +1,5 @@
 import { env } from '$env/dynamic/public';
 import { error } from '@sveltejs/kit';
-import { safeFetch } from '$lib/utils';
 import type { Tournament, Competition, Game, Team } from '$lib/types';
 
 export async function load({ params, fetch }) {
@@ -11,18 +10,26 @@ export async function load({ params, fetch }) {
 	const doubleDashIndex = slug.lastIndexOf('--');
 	const id = doubleDashIndex !== -1 ? slug.substring(doubleDashIndex + 2) : slug;
 
-	// Fetch the tournament, competitions, teams, and games for this tournament.
-	// safeFetch converts network-level failures (backend down, DNS, etc.) into a
-	// user-friendly 503 error page instead of an opaque `TypeError: fetch failed`.
-	const [tournamentRes, competitionsRes, teamsRes, gamesRes] = await Promise.all([
-		safeFetch(fetch, `${apiUrl}/items/tournament/${id}?fields=*,location.*`),
-		safeFetch(fetch, `${apiUrl}/items/competition`),
-		safeFetch(fetch, `${apiUrl}/items/team?fields=id,team_name`),
-		safeFetch(fetch, `${apiUrl}/items/game?filter[game_tournament][_eq]=${id}&sort=date&limit=-1`)
-	]);
+	let tournamentRes: Response;
+	let competitionsRes: Response;
+	let teamsRes: Response;
+	let gamesRes: Response;
+	try {
+		[tournamentRes, competitionsRes, teamsRes, gamesRes] = await Promise.all([
+			fetch(`${apiUrl}/items/tournament/${id}?fields=*,location.*`),
+			fetch(`${apiUrl}/items/competition`),
+			fetch(`${apiUrl}/items/team?fields=id,team_name`),
+			fetch(`${apiUrl}/items/game?filter[game_tournament][_eq]=${id}&sort=date&limit=-1`)
+		]);
+	} catch {
+		error(
+			503,
+			'We could not reach the data server. The service may be down or your connection may have dropped. Please try again in a moment.'
+		);
+	}
 
 	if (!tournamentRes.ok) {
-		throw error(404, 'Tournament not found');
+		error(404, 'Tournament not found');
 	}
 
 	const tournament: Tournament = (await tournamentRes.json()).data;

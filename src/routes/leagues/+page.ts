@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/public';
-import { safeFetch } from '$lib/utils';
+import { error } from '@sveltejs/kit';
 import type {
 	League,
 	Team,
@@ -13,17 +13,29 @@ import type {
 export async function load({ fetch }) {
 	const apiUrl = env.PUBLIC_API_URL || 'https://backend.openrollerderby.eu';
 
-	const [leaguesRes, teamsRes, contactsRes, orgsRes, gamesRes, countriesRes] = await Promise.all([
-		safeFetch(
-			fetch,
-			`${apiUrl}/items/league?fields=id,name,country,location.id,location.name,location.address,location.location`
-		),
-		safeFetch(fetch, `${apiUrl}/items/team?fields=*,affiliation.*`),
-		safeFetch(fetch, `${apiUrl}/items/League_Contact`),
-		safeFetch(fetch, `${apiUrl}/items/organization`),
-		safeFetch(fetch, `${apiUrl}/items/game?sort=-date&limit=-1`),
-		safeFetch(fetch, `${apiUrl}/items/countries`)
-	]);
+	let leaguesRes: Response;
+	let teamsRes: Response;
+	let contactsRes: Response;
+	let orgsRes: Response;
+	let gamesRes: Response;
+	let countriesRes: Response;
+	try {
+		[leaguesRes, teamsRes, contactsRes, orgsRes, gamesRes, countriesRes] = await Promise.all([
+			fetch(
+				`${apiUrl}/items/league?fields=id,name,country,location.id,location.name,location.address,location.location`
+			),
+			fetch(`${apiUrl}/items/team?fields=*,affiliation.*`),
+			fetch(`${apiUrl}/items/League_Contact`),
+			fetch(`${apiUrl}/items/organization`),
+			fetch(`${apiUrl}/items/game?sort=-date&limit=-1`),
+			fetch(`${apiUrl}/items/countries`)
+		]);
+	} catch {
+		error(
+			503,
+			'We could not reach the data server. The service may be down or your connection may have dropped. Please try again in a moment.'
+		);
+	}
 
 	const leagues: League[] = leaguesRes.ok ? (await leaguesRes.json()).data : [];
 	const teamsData: Team[] = teamsRes.ok ? (await teamsRes.json()).data : [];
