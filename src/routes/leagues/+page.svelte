@@ -21,6 +21,7 @@
 	import { page } from '$app/state';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { filterLeagues } from '$lib/utils';
 
 	type PageData = {
 		geojson: LeagueFeatureCollection;
@@ -137,51 +138,17 @@
 	});
 
 	// --- Filtering based on URL params ---
-	// Precompute per-league organization ids and team types from the teams data.
-	let leagueOrgMap = $derived(
-		data.teams.reduce<Record<string, string[]>>((acc, t) => {
-			const arr = acc[t.team_league] ?? [];
-			for (const aff of t.affiliation ?? []) {
-				if (!arr.includes(aff.organization_id)) arr.push(aff.organization_id);
-			}
-			return { ...acc, [t.team_league]: arr };
-		}, {})
-	);
-	let leagueTeamTypeMap = $derived(
-		data.teams.reduce<Record<string, string[]>>((acc, t) => {
-			if (!t.team_type) return acc;
-			const arr = acc[t.team_league] ?? [];
-			if (!arr.includes(t.team_type)) arr.push(t.team_type);
-			return { ...acc, [t.team_league]: arr };
-		}, {})
-	);
-
 	let selectedCountries = $derived(browser ? page.url.searchParams.getAll('country') : []);
 	let selectedOrgs = $derived(browser ? page.url.searchParams.getAll('organization') : []);
 	let selectedTeamTypes = $derived(browser ? page.url.searchParams.getAll('team_type') : []);
-	let hasFilters = $derived(
-		selectedCountries.length > 0 || selectedOrgs.length > 0 || selectedTeamTypes.length > 0
-	);
 
-	let filteredGeojson = $derived.by<LeagueFeatureCollection>(() => {
-		if (!hasFilters) return data.geojson;
-		const features = data.geojson.features.filter((f) => {
-			const id = f.properties.id;
-			if (selectedCountries.length > 0 && !selectedCountries.includes(f.properties.country ?? '')) {
-				return false;
-			}
-			if (selectedOrgs.length > 0) {
-				const leagueOrgs = leagueOrgMap[id];
-				if (!leagueOrgs || !leagueOrgs.some((o) => selectedOrgs.includes(o))) return false;
-			}
-			if (selectedTeamTypes.length > 0) {
-				const leagueTypes = leagueTeamTypeMap[id];
-				if (!leagueTypes || !leagueTypes.some((t) => selectedTeamTypes.includes(t))) return false;
-			}
-			return true;
-		});
-		return { type: 'FeatureCollection', features };
-	});
+	let filteredGeojson = $derived(
+		filterLeagues(data.geojson, data.teams, {
+			countries: selectedCountries,
+			organizations: selectedOrgs,
+			teamTypes: selectedTeamTypes
+		})
+	);
 
 	// Close the popup if the selected league is no longer in the filtered set.
 	$effect(() => {

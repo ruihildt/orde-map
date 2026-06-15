@@ -5,6 +5,7 @@
 	import { ChevronDown, ChevronRight, Search } from '@lucide/svelte';
 	import type { LeagueFeatureCollection, Team, Organization } from '$lib/types';
 	import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from '$lib/components/ui/sidebar';
+	import { filterLeagues } from '$lib/utils';
 
 	let {
 		geojson,
@@ -48,6 +49,16 @@
 		selectedCountries.length + selectedOrgs.length + selectedTeamTypes.length
 	);
 
+	// Number of leagues matching the current filters ("X of Y leagues").
+	let filteredCount = $derived(
+		filterLeagues(geojson, teams, {
+			countries: selectedCountries,
+			organizations: selectedOrgs,
+			teamTypes: selectedTeamTypes
+		}).features.length
+	);
+	let totalCount = $derived(geojson.features.length);
+
 	// --- UI state for collapsible sections ---
 	let countryOpen = $state(false);
 	let orgOpen = $state(false);
@@ -88,13 +99,18 @@
 	<SidebarGroupLabel class="flex items-center justify-between">
 		<span>Filters</span>
 		{#if activeCount > 0}
-			<button
-				type="button"
-				onclick={clearAll}
-				class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
-			>
-				Clear ({activeCount})
-			</button>
+			<div class="flex items-center gap-2">
+				<span class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+					{filteredCount} of {totalCount} leagues
+				</span>
+				<button
+					type="button"
+					onclick={clearAll}
+					class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+				>
+					Clear
+				</button>
+			</div>
 		{/if}
 	</SidebarGroupLabel>
 	<SidebarGroupContent>
