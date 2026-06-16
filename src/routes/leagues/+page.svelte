@@ -115,9 +115,9 @@
 	}
 
 	function handleMapLoad() {
-		if (!mapInstance || !data.geojson.features.length) return;
+		if (!mapInstance || !filteredGeojson.features.length) return;
 		const bounds = new maplibregl.LngLatBounds();
-		for (const feature of data.geojson.features) {
+		for (const feature of filteredGeojson.features) {
 			const [lng, lat] = feature.geometry.coordinates;
 			bounds.extend([lng, lat]);
 		}
