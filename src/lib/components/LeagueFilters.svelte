@@ -116,7 +116,7 @@
 	<SidebarGroupContent>
 		<div class="space-y-px">
 			<!-- Country -->
-			<div class="border-b border-border/50">
+			<div>
 				<button
 					type="button"
 					onclick={() => (countryOpen = !countryOpen)}
@@ -171,7 +171,7 @@
 			</div>
 
 			<!-- Organization -->
-			<div class="border-b border-border/50">
+			<div>
 				<button
 					type="button"
 					onclick={() => (orgOpen = !orgOpen)}
