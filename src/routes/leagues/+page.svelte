@@ -179,6 +179,7 @@
 		center={{ lng: 10, lat: 48 }}
 		zoom={3}
 		dragRotate={false}
+		attributionControl={{ compact: true }}
 		class="map"
 		bind:map={mapInstance}
 		onload={handleMapLoad}
